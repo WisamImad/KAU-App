@@ -1,0 +1,153 @@
+import 'dart:math';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:kau_app/utils/sizeConfig.dart';
+import 'model.dart';
+
+class BoardView extends StatefulWidget {
+  final double? angle;
+  final double? current;
+  final List<Luck>? items;
+
+  const BoardView({Key? key, this.angle, this.current, this.items})
+      : super(key: key);
+
+  @override
+  State<StatefulWidget> createState() {
+    return _BoardViewState();
+  }
+}
+
+class _BoardViewState extends State<BoardView> {
+  Size get size => Size(MediaQuery.of(context).size.width * 0.5,
+      MediaQuery.of(context).size.width * 0.8);
+
+  double _rotote(int index) => (index / widget.items!.length) * 2 * pi;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: <Widget>[
+        //shadow
+        Container(
+          height: SizeConfig.safeBlockVertical! * 14,
+          width: SizeConfig.safeBlockHorizontal! * 12,
+          decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [BoxShadow(blurRadius: 20, color: Colors.black38)]),
+        ),
+        Transform.rotate(
+          angle: -(widget.current! + widget.angle!) * 2 * pi,
+          child: Stack(
+            alignment: Alignment.center,
+            children: <Widget>[
+              for (var luck in widget.items!) ...[_buildCard(luck)],
+              for (var luck in widget.items!) ...[_buildImage(luck)],
+            ],
+          ),
+        ),
+      ],
+    );
+
+//
+//  return Transform.rotate(
+//    angle: -(widget.current + widget.angle) * 2 * pi,
+//    child: Stack(
+//      alignment: Alignment.center,
+//      children: <Widget>[
+//        for (var luck in widget.items) ...[_buildCard(luck)],
+//        for (var luck in widget.items) ...[_buildImage(luck)],
+//      ],
+//    ),
+//  );
+  }
+
+  _buildCard(Luck luck) {
+    var _rotate = _rotote(widget.items!.indexOf(luck));
+    var _angle = 2 * pi / widget.items!.length;
+    return Transform.rotate(
+      angle: _rotate,
+      child: ClipPath(
+        clipper: _LuckPath(_angle),
+        child: Container(
+          height: size.height,
+          width: size.width,
+          decoration: BoxDecoration(
+              gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [luck.color, luck.color.withOpacity(1)])),
+        ),
+      ),
+    );
+  }
+
+//  _buildImage(Luck luck) {
+//   var _rotate = _rotote(widget.items.indexOf(luck))+5;///change the plase
+//   // var _rotate =0;
+//    return Transform.rotate(
+//      angle: _rotate ,
+//      child: Container(
+//        height: size.height,
+//        width: size.width,
+//       //padding: EdgeInsets.only(top: 30),
+//       padding: EdgeInsets.only(bottom: 10),
+//        alignment: Alignment.bottomCenter,
+//        child: ConstrainedBox(
+//          constraints:
+//         // BoxConstraints.expand(height: size.height / 3, width: size.width/8),
+//          BoxConstraints.expand(height: SizeConfig.safeBlockVertical*17, width: SizeConfig.safeBlockHorizontal*18),
+//          child:  Transform.rotate(angle: (   pi  ),child: Image.asset(luck.asset
+//              )),
+//        ),
+//      ),
+//    );
+//  }
+//}
+
+  _buildImage(Luck luck) {
+    var _rotate = _rotote(widget.items!.indexOf(luck));
+    return Transform.rotate(
+      angle: _rotate,
+      child: Container(
+        height: size.height,
+        width: size.width,
+        alignment: Alignment.topCenter,
+        padding: EdgeInsets.only(top: SizeConfig.safeBlockVertical! * 6),
+        child: Transform.rotate(
+            angle: -pi * 5,
+            child: Container(
+                height: SizeConfig.safeBlockVertical! * 15,
+                width: SizeConfig.safeBlockHorizontal! * 12,
+                child: Image.asset(
+                  luck.asset,
+                  fit: BoxFit.contain,
+                ))),
+      ),
+    );
+  }
+}
+
+class _LuckPath extends CustomClipper<Path> {
+  final double angle;
+
+  _LuckPath(this.angle);
+
+  @override
+  Path getClip(Size size) {
+    Path _path = Path();
+    Offset _center = size.center(Offset.zero);
+    Rect _rect =
+        Rect.fromCircle(center: _center, radius: size.width / 2); ///////
+    _path.moveTo(_center.dx, _center.dy);
+    _path.arcTo(_rect, -pi / 2 - angle / 2, angle, false);
+    _path.close();
+    return _path;
+  }
+
+  @override
+  bool shouldReclip(_LuckPath oldClipper) {
+    return angle != oldClipper.angle;
+  }
+}
